@@ -1,0 +1,196 @@
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <title>Forum</title>
+
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+	<style>
+		small{
+			font-size: 10px;
+		}
+		#messages li{
+			background-color: #f0f0f0;
+			border-radius: 5px;
+			margin-top: 5px;
+		}
+		.btn-file {
+			position: relative;
+			overflow: hidden;
+		}
+		.btn-file input[type=file] {
+			position: absolute;
+			top: 0;
+			right: 0;
+			min-width: 100%;
+			min-height: 100%;
+			font-size: 100px;
+			text-align: right;
+			filter: alpha(opacity=0);
+			opacity: 0;
+			outline: none;
+			background: black;
+			cursor: inherit;
+			display: block;
+		}
+		li img{
+			height: 150px;
+			width: auto;
+			border: 1px solid #828282;
+			margin: 10px;
+		}
+	</style>
+	</head>
+
+<body bgcolor="#111" style="background-image: url('images/shoe.jpg');">
+<a  onClick= "location.href='../index.html'" style="position: absolute; top: 20px; left: 20px; font-size: 20px; color:#f44336; ">Return</a>
+<div id="chat" class="container">
+	<div class="row" style="margin: 50px 0px">
+		<div class="col-md-3"></div>
+		<div class="col-md-6">
+			<header >
+				<center><h1 style="color: #f44336;">Forum</h1><center>
+				<hr />
+			</header>
+		</div>
+	</div>
+	<div class="row" >
+		<div class="col-md-3"></div>
+		<div class="col-md-6"style="height: 450px !Important; overflow-y: scroll;border: 1px splid #f0f0f0;">
+			<ul class="list-group" id="messages">
+				<li style="margin-top: 35%; border: none; text-align: center; font-size: 40px;">Loading...</li>
+			</ul>
+		</div>
+	</div>
+	<div class="row" style="margin-top: 20px; ">
+		<div class="col-md-3"></div>
+		<div class="col-md-6" style="background-color: #e0e0e0; padding: 40px;border-radius: 10px;border: 1px solid #e0e0e0;">
+			<input class="form-control" type="text" placeholder="enter your message" id="messageInput"/> 
+			<button id="sendBtn" class="btn btn-success" style="margin-top: 10px;width: 100%;">send</button>
+			<label id="uploadBtn" class="btn btn-primary btn-file" style="margin-top: 10px; width: 100%;">
+				send a file <input type="file" accept="image/jpeg,image/png" style="display: none;" >
+			</label>
+		</div>
+	</div>
+</div>
+
+<script src="js/json3.min.js"></script>
+<script src="js/jquery-1.10.1.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/5.5.9/firebase.js"></script>
+<script>
+  // Initialize Firebase
+  var config = {
+    apiKey: "AIzaSyABVkwZ1_4qkrhCqbCq6tufxt-1njqd7xs",
+    authDomain: "webfinal-cd72d.firebaseapp.com",
+    databaseURL: "https://webfinal-cd72d.firebaseio.com",
+    projectId: "webfinal-cd72d",
+    storageBucket: "webfinal-cd72d.appspot.com",
+    messagingSenderId: "999586594539"
+  };
+  firebase.initializeApp(config);
+  
+  var email;
+  var name;
+  firebase.auth().onAuthStateChanged(function(user) {
+			if (user) {
+				firebase.database().ref().root.child(user.uid).child('Name').once('value').then(function (snapshot) {
+					name=snapshot.val();
+				});
+                
+				email = user.email;
+				firebase.database().ref().child('users').child(user.uid).set({
+					email: email
+					,name: name
+				});
+			} else {
+				location.href = "login.html";
+			}
+		});
+		
+  
+  $("#signOut").click(function(){
+	firebase.auth().signOut().then(function() {
+		// Sign-out successful.
+	}).catch(function(error) {
+		// An error happened.
+	});
+  });
+</script>
+
+
+<script>
+	$(document).ready(function(){
+		var messagesRef = firebase.database().ref().child('chat');
+		$("#sendBtn").click(function(){
+			let value = $("#messageInput").val();
+			if(value == "") return;
+			let ref = messagesRef.push();
+			ref.set({
+				type: "text",
+				message: value,
+				sender: name, 
+				timestamp: new Date().toString()
+			});
+			$("#messageInput").val('');
+		});
+		messagesRef.on('value', function(data){ 
+			$("#messages").empty();
+			data.forEach(function(childSnapshot) {
+				let childData = childSnapshot.val();
+				if(childData.type == "image"){
+					$("#messages").append('<li class="list-group-item">' 
+						+ "<small>" + childData.sender + "</small><br />" 
+						+ "<img src='" + childData.message + "'/><br />"
+						+ "<small>" + childData.timestamp + "</small>"
+					+ '</li>');
+				} else{
+					$("#messages").append('<li class="list-group-item">' 
+						+ "<small>" + childData.sender + "</small><br />" 
+						+ "<h5 style='margin: 5px 10px !important;'>" + childData.message + "</h5>"
+						+ "<small>" + childData.timestamp + "</small>"
+					+ '</li>');
+				}
+			  });
+			$("#messages").parent().scrollTop($('#messages').height());
+		});
+		
+		
+		$('input').on("keypress", function(e) {
+            if (e.keyCode == 13) {
+                $("#sendBtn").click();
+                return false;
+            }
+        });
+
+		$("input[type='file']").on('change', function(e){
+			if(e.target.files.length == 0){
+				console.log('cancelled');
+				return;
+			}
+			$("#uploadBtn").text('uploading...');
+			var storageRef = firebase.storage().ref();
+			var fIleName = storageRef.child("images/" + new Date().getTime());
+			fIleName.put(e.target.files[0]).then(function(snapshot){
+					fIleName.getDownloadURL().then(function(url){
+						let ref = messagesRef.push();
+						ref.set({
+							type: "image",
+							message: url,
+							sender: name, 
+							timestamp: new Date().toString()
+						});
+						$("#uploadBtn").text('send a file');
+						$("input[type='file']").val(null);
+					}).catch(function(err){ console.log(err); });
+			}).catch(function(err){ console.log(err); $("#uploadBtn").text("didn't work out.. try again!");});
+		});
+		
+	});
+	
+</script>
+</body>
+</html>
