@@ -165,11 +165,11 @@
             function addressBtn(){
                 console.log('edit clicked');
                 let address = $("#addressEdit").val();
-                 var userName = firebase.database().ref().root.child(currentUser.uid).child('Address');
-                 if(name == ''){
+                 var userAddress = firebase.database().ref().root.child(currentUser.uid).child('Address');
+                 if(address == ''){
                     alert("Write something...");
                  }else{
-                 userName.set(address);    
+                 userAddress.set(address);    
                  }
                  
                  location.href = "ProfileEdit.html";
